@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import io
+import base64
 
 # System Configuration
 st.set_page_config(
@@ -169,7 +170,7 @@ def apply_plotly_theme(fig):
 # UI Layout
 st.sidebar.title("🛢️ ResEng Dashboard")
 st.sidebar.markdown("---")
-tab = st.sidebar.radio("Analysis Modules", ["Multiphase Properties (Kr, Fw, Pc)", "Permeability Averaging"])
+tab = st.sidebar.radio("Analysis Modules", ["Multiphase Properties (Kr, Fw, Pc)", "Permeability Averaging", "Reference Material (PDF)"])
 
 if tab == "Multiphase Properties (Kr, Fw, Pc)":
     st.markdown('<div class="section-header">Brooks-Corey Multiphase Flow & Capillary Pressure</div>', unsafe_allow_html=True)
@@ -296,3 +297,29 @@ elif tab == "Permeability Averaging":
         st.metric("Arithmetic Average (Parallel Flow)", f"{k_arithmetic:.2f} mD")
         st.metric("Harmonic Average (Series Flow)", f"{k_harmonic:.2f} mD")
         st.metric("Geometric Average (Random Flow)", f"{k_geometric:.2f} mD")
+
+elif tab == "Reference Material (PDF)":
+    st.markdown('<div class="section-header">Reference Textbook Viewer</div>', unsafe_allow_html=True)
+    pdf_target_name = "Fundamentals of Reservoir Rock Properties - Nayef.pdf"
+    
+    try:
+        with open(pdf_target_name, "rb") as f:
+            pdf_bytes = f.read()
+        st.success("Target source document found in local directory.")
+    except FileNotFoundError:
+        pdf_bytes = None
+        st.warning(f"File '{pdf_target_name}' not found. Please upload the source document.")
+        uploaded_file = st.file_uploader("Upload PDF Reference", type="pdf")
+        if uploaded_file is not None:
+            pdf_bytes = uploaded_file.read()
+
+    if pdf_bytes:
+        st.download_button(
+            label="Download Reference PDF",
+            data=pdf_bytes,
+            file_name=pdf_target_name,
+            mime="application/pdf"
+        )
+        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+        st.markdown(pdf_display, unsafe_allow_html=True)
